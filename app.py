@@ -4,4 +4,4 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-backend_url = "https://ai-catalyst.onrender.com"
+backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
