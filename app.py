@@ -4,10 +4,12 @@ import os
 from dotenv import load_dotenv
 from streamlit_lottie import st_lottie
 import json
+import time
 
 # Load environment variables
 load_dotenv()
 backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+api_key = os.getenv("API_KEY", "your-secret")  # New: API Key
 
 # Page config with Adobe Red theme and gradient background
 st.set_page_config(
@@ -84,6 +86,7 @@ if mode == "Ask a question":
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
     with st.spinner("🚀 Processing..."):
         try:
+            start_time = time.time()  # Analytics logging
             endpoint = "/summarize" if mode == "Summarize" else "/ask"
             files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
             data = {
@@ -96,7 +99,8 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
             if mode == "Ask a question":
                 data["question"] = question
 
-            response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
+            headers = {"x-api-key": api_key}  # API Key header
+            response = requests.post(f"{backend_url}{endpoint}", headers=headers, files=files, data=data)
             response.raise_for_status()
             result = response.json()
 
@@ -106,6 +110,9 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
             if "citations" in result:
                 sources = ", ".join(result["citations"])
                 st.markdown(f"<p style='font-size: 14px;'>📚 Citations from: {sources}</p>", unsafe_allow_html=True)
+
+            # Log basic analytics info
+            st.markdown(f"<p class='tooltip'>📈 Processed in {round(time.time() - start_time, 2)}s</p>", unsafe_allow_html=True)
 
         except requests.exceptions.RequestException as e:
             st.error(f"Request failed: {e}")
