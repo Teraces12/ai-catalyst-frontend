@@ -8,6 +8,7 @@ import json
 import time
 import logging
 from datetime import datetime
+from fastapi.staticfiles import StaticFiles
 
 # Load environment variables
 load_dotenv()
@@ -27,15 +28,14 @@ st.set_page_config(
 # Adobe red-themed background style
 st.markdown("""
     <style>
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+        html, body, [class*="css"]  {
+            font-family: 'Poppins', sans-serif;
             background: linear-gradient(to right, #FF0000, #D00000);
             color: white;
         }
         .stApp {
             background: transparent !important;
-        }
-        .css-1v3fvcr, .css-ffhzg2 {
-            background-color: transparent !important;
         }
         .stTextInput>div>input, .stSelectbox>div>div>div, .stButton>button {
             color: black !important;
@@ -59,7 +59,7 @@ animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_p8bf
 # --- Logo and Header ---
 st.markdown("""
 <div style='text-align:center;'>
-    <img src='Terasystemsai_logo.png' width='180'/>
+    <img src='https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/static/Terasystemsai_logo.png' width='180'/>
     <div style='display:flex; justify-content:center; align-items:center; gap: 10px;'>
         <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
         <div style='width: 80px;'>
@@ -136,7 +136,7 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
 # --- Footer Branding ---
 st.markdown("""
 <div style='text-align:center;'>
-    <img src='Terasystemsai_logo.png' width='100'/>
+    <img src='https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/static/Terasystemsai_logo.png' width='100'/>
     <p style="font-size:14px; color:#eeeeee;">
         <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
         📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
