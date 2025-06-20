@@ -6,11 +6,16 @@ from streamlit_lottie import st_lottie
 from PIL import Image
 import json
 import time
+import logging
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
 api_key = os.getenv("API_KEY", "your-secret")  # API Key
+
+# Configure analytics logging
+logging.basicConfig(filename="analytics.log", level=logging.INFO)
 
 # Page config with Adobe Red theme and gradient background
 st.set_page_config(
@@ -109,8 +114,9 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
                 sources = ", ".join(result["citations"])
                 st.markdown(f"<p style='font-size: 14px;'>📚 Citations from: {sources}</p>", unsafe_allow_html=True)
 
-            # Log basic analytics info
-            st.markdown(f"<p class='tooltip'>📈 Processed in {round(time.time() - start_time, 2)}s</p>", unsafe_allow_html=True)
+            duration = round(time.time() - start_time, 2)
+            logging.info(f"{datetime.utcnow()} | Mode: {mode.lower()} | Time: {duration}s")
+            st.markdown(f"<p class='tooltip'>📈 Processed in {duration}s</p>", unsafe_allow_html=True)
 
         except requests.exceptions.RequestException as e:
             st.error(f"Request failed: {e}")
