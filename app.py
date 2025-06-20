@@ -1,53 +1,30 @@
-import streamlit as st
-import requests
-import os
-from dotenv import load_dotenv
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv()
-backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+app = FastAPI(
+    title="AI Catalyst API",
+    description="🧠 Summarize & Ask Questions from PDF files using LangChain + OpenAI",
+    version="1.0.0"
+)
 
-st.set_page_config(page_title="AI Catalyst PDF Assistant", page_icon="🧠", layout="centered", initial_sidebar_state="collapsed")
-st.title("AI Catalyst PDF Assistant 🧠")
-st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Make more strict for production
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Upload PDF
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+@app.get("/", tags=["Health Check"])
+def read_root():
+    return JSONResponse(content={"status": "✅ API is running", "message": "Welcome to AI Catalyst - your smart PDF assistant!"})
 
-# Choose mode
-mode = st.radio("What do you want to do?", ("Summarize", "Ask a question"))
+@app.post("/summarize")
+async def summarize_pdf(file: UploadFile = File(...)):
+    # Dummy response — replace with real LangChain logic
+    return {"summary": f"This is a summary of {file.filename}."}
 
-question = ""
-if mode == "Ask a question":
-    question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
-
-# Submit
-if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
-    with st.spinner("Processing..."):
-        progress = st.progress(0)
-        try:
-            endpoint = "/summarize" if mode == "Summarize" else "/ask"
-            files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
-            data = {"question": question} if mode == "Ask a question" else None
-
-            response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
-            progress.progress(100)
-
-            if response.status_code == 200:
-                result = response.json()
-                st.success("Done!")
-                st.markdown("---")
-                if mode == "Summarize":
-                    st.markdown("### 🌍 Summary")
-                    st.write(result.get("summary", "No summary returned."))
-                else:
-                    st.markdown("### 🧠 Answer")
-                    st.write(result.get("answer", "No answer returned."))
-            else:
-                st.error(f"Error {response.status_code}: {response.text}")
-        except Exception as e:
-            st.error(f"Something went wrong: {str(e)}")
-
-st.markdown("""
----
-🚀 Built with ❤️ by AI Catalyst
-""")
+@app.post("/ask")
+async def ask_question(file: UploadFile = File(...), question: str = Form(...)):
+    # Dummy response — replace with real logic
+    return {"answer": f"You asked: '{question}' based on {file.filename}."}
