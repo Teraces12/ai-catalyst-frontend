@@ -50,9 +50,9 @@ animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_p8bf
 
 # --- Logo and Header ---
 st.markdown(
-    """
+    f"""
     <div style="text-align: center;">
-        <img src="https://raw.githubusercontent.com/Teraces12/ai-catalyst-frontend/main/assets/terasystem_logo.png" width="180">
+        <img src="Terasystemsai_logo.png" width="180">
         <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
         <h4 style="color:#F8F8F8;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
     </div>
@@ -114,10 +114,10 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
 
 # --- Footer Branding ---
 st.markdown(
-    """
+    f"""
     <hr>
     <div style="text-align:center;">
-        <img src="https://raw.githubusercontent.com/Teraces12/ai-catalyst-frontend/main/assets/terasystem_logo.png" width="100">
+        <img src="Terasystemsai_logo.png" width="100">
         <p style="font-size:14px; color:#eeeeee;">
             <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
             📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
