@@ -3,13 +3,14 @@ import requests
 import os
 from dotenv import load_dotenv
 from streamlit_lottie import st_lottie
+from PIL import Image
 import json
 import time
 
 # Load environment variables
 load_dotenv()
 backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
-api_key = os.getenv("API_KEY", "your-secret")  # New: API Key
+api_key = os.getenv("API_KEY", "your-secret")  # API Key
 
 # Page config with Adobe Red theme and gradient background
 st.set_page_config(
@@ -51,16 +52,13 @@ def load_lottie_url(url):
 animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_p8bfn5to.json")
 
 # --- Logo and Header ---
-st.markdown(
-    f"""
-    <div style="text-align: center;">
-        <img src="Terasystemsai_logo.png" width="180">
-        <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
-        <h4 style="color:#F8F8F8;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+st.image("Terasystemsai_logo.png", width=180)
+st.markdown("""
+    <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
+    <h4 style="color:#F8F8F8;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
+</div>
+""", unsafe_allow_html=True)
 
 st_lottie(animation, height=150, key="intro")
 
@@ -120,18 +118,14 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
             st.error(f"Error: {e}")
 
 # --- Footer Branding ---
-st.markdown(
-    f"""
-    <hr>
-    <div style="text-align:center;">
-        <img src="Terasystemsai_logo.png" width="100">
-        <p style="font-size:14px; color:#eeeeee;">
-            <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
-            📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
-            ✉️ <a style="color:#fff;" href="mailto:admin@terasystems.ai">admin@terasystems.ai</a> | <a style="color:#fff;" href="mailto:lebede@terasystems.ai">lebede@terasystems.ai</a><br>
-            🌐 <a style="color:#fff;" href="https://www.terasystems.ai">www.terasystems.ai</a>
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+st.image("Terasystemsai_logo.png", width=100)
+st.markdown("""
+    <p style="font-size:14px; color:#eeeeee;">
+        <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
+        📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
+        ✉️ <a style="color:#fff;" href="mailto:admin@terasystems.ai">admin@terasystems.ai</a> | <a style="color:#fff;" href="mailto:lebede@terasystems.ai">lebede@terasystems.ai</a><br>
+        🌐 <a style="color:#fff;" href="https://www.terasystems.ai">www.terasystems.ai</a>
+    </p>
+</div>
+""", unsafe_allow_html=True)
