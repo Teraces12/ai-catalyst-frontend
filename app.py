@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
+from streamlit_lottie import st_lottie
+import json
 
 # Load environment variables
 load_dotenv()
@@ -30,8 +32,21 @@ st.markdown("""
         .stTextInput>div>input, .stSelectbox>div>div>div, .stButton>button {
             color: black !important;
         }
+        .tooltip {
+            font-size: 12px;
+            color: #ccc;
+        }
     </style>
 """, unsafe_allow_html=True)
+
+# --- Lottie animation loader ---
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_p8bfn5to.json")
 
 # --- Logo and Header ---
 st.markdown(
@@ -45,13 +60,15 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st_lottie(animation, height=150, key="intro")
+
 # --- Upload section ---
 uploaded_file = st.file_uploader("📄 Upload a PDF", type=["pdf"])
 
 mode = st.radio("🔍 What do you want to do?", ["Summarize", "Ask a question"], horizontal=True)
 model_name = st.selectbox("🤖 Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
-temperature = st.slider("🎨 Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
-allow_non_english = st.checkbox("🌐 Allow non-English PDFs")
+temperature = st.slider("🎨 Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1, help="Higher values mean more creative output")
+allow_non_english = st.checkbox("🌐 Allow non-English PDFs", help="Enable to analyze PDFs in any language")
 
 col1, col2 = st.columns(2)
 with col1:
