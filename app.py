@@ -20,16 +20,20 @@ st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI"
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 mode = st.radio("What do you want to do?", ["Summarize", "Ask a question"])
 
-# New options
+# Advanced options
 model_name = st.selectbox("Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
 temperature = st.slider("Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
 allow_non_english = st.checkbox("Allow non-English PDFs", value=False)
+col1, col2 = st.columns(2)
+with col1:
+    start_page = st.number_input("Start Page", min_value=1, value=1)
+with col2:
+    end_page = st.number_input("End Page", min_value=start_page, value=start_page + 4)
 
 question = ""
 if mode == "Ask a question":
     question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
 
-# Trigger API
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
     with st.spinner("Processing..."):
         progress = st.progress(0)
@@ -39,7 +43,9 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
             data = {
                 "model_name": model_name,
                 "temperature": temperature,
-                "allow_non_english": str(allow_non_english).lower()  # 'true' or 'false'
+                "allow_non_english": str(allow_non_english).lower(),
+                "start_page": int(start_page),
+                "end_page": int(end_page)
             }
 
             if mode == "Ask a question":
@@ -47,13 +53,17 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
 
             response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
             response.raise_for_status()
-
             result = response.json()
+
             answer = result.get("answer")
+            language = result.get("language", "unknown")
+            citations = result.get("citations", [])
 
             if answer:
                 st.success(answer)
-                st.info(f"Detected Language: {result.get('language', 'unknown')}")
+                st.info(f"Detected Language: {language}")
+                if citations:
+                    st.caption(f"📚 Citations from: {', '.join(citations)}")
             else:
                 st.error("Unexpected response format.")
 
