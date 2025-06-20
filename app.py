@@ -1,33 +1,39 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
+import streamlit as st
+import requests
+import os
+from dotenv import load_dotenv
 
-app = FastAPI(
-    title="AI Catalyst API",
-    description="🧠 Summarize & Ask Questions from PDF files using LangChain + OpenAI",
-    version="1.0.0"
-)
+load_dotenv()
+backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Make more strict for production
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+st.set_page_config(page_title="AI Catalyst PDF Assistant", page_icon="🧠", layout="centered", initial_sidebar_state="collapsed")
+st.title("AI Catalyst PDF Assistant 🧠")
+st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
 
-@app.get("/", tags=["Health Check"])
-def read_root():
-    return JSONResponse(content={
-        "status": "✅ API is running",
-        "message": "Welcome to AI Catalyst - your smart PDF assistant!"
-    })
+uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+mode = st.radio("What do you want to do?", ("Summarize", "Ask a question"))
 
-@app.post("/summarize")
-async def summarize_pdf(file: UploadFile = File(...)):
-    # Dummy response — replace with real LangChain logic
-    return {"summary": f"This is a summary of {file.filename}."}
+question = ""
+if mode == "Ask a question":
+    question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
 
-@app.post("/ask")
-async def ask_question(file: UploadFile = File(...), question: str = Form(...)):
-    # Dummy response — replace with real logic
-    return {"answer": f"You asked: '{question}' based on {file.filename}."}
+if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
+    with st.spinner("Processing..."):
+        progress = st.progress(0)
+        try:
+            endpoint = "/summarize" if mode == "Summarize" else "/ask"
+            files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
+            data = {"question": question} if mode == "Ask a question" else None
+
+            response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
+            result = response.json()
+
+            if "summary" in result:
+                st.success(result["summary"])
+            elif "answer" in result:
+                st.success(result["answer"])
+            else:
+                st.error("Unexpected response format.")
+        except Exception as e:
+            st.error(f"Error: {e}")
+        progress.progress(100)
