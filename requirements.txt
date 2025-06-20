@@ -1,6 +1,9 @@
 streamlit
-streamlit-lottie
 requests
 python-dotenv
-reportlab
-fpdf
+streamlit-lottie
+pymupdf
+langchain
+openai
+faiss-cpu
+langdetect
