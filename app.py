@@ -28,7 +28,7 @@ question = ""
 if mode == "Ask a question":
     question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
 
-# Trigger request
+# Trigger API request
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
     with st.spinner("Processing..."):
         progress = st.progress(0)
@@ -38,7 +38,7 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
             data = {"question": question} if mode == "Ask a question" else {}
 
             response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
-            response.raise_for_status()  # Raise exception if not 200
+            response.raise_for_status()  # Raise if status_code != 200
 
             result = response.json()
             answer = result.get("answer")
@@ -47,6 +47,14 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
                 st.success(answer)
             else:
                 st.error("Unexpected response format.")
+
+        except requests.exceptions.HTTPError as http_err:
+            try:
+                error_msg = response.json().get("error", str(http_err))
+                st.error(f"Error: {error_msg}")
+            except:
+                st.error(f"HTTP error: {http_err}")
         except Exception as e:
             st.error(f"Error: {e}")
-        progress.progress(100)
+        finally:
+            progress.progress(100)
