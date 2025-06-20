@@ -17,34 +17,43 @@ st.set_page_config(
 st.title("AI Catalyst PDF Assistant 🧠")
 st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
 
-# File upload
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
-
-# Mode selection
 mode = st.radio("What do you want to do?", ["Summarize", "Ask a question"])
 
-# Question input
+# New options
+model_name = st.selectbox("Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
+temperature = st.slider("Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
+allow_non_english = st.checkbox("Allow non-English PDFs", value=False)
+
 question = ""
 if mode == "Ask a question":
     question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
 
-# Trigger API request
+# Trigger API
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
     with st.spinner("Processing..."):
         progress = st.progress(0)
         try:
             endpoint = "/summarize" if mode == "Summarize" else "/ask"
             files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
-            data = {"question": question} if mode == "Ask a question" else {}
+            data = {
+                "model_name": model_name,
+                "temperature": temperature,
+                "allow_non_english": str(allow_non_english).lower()  # 'true' or 'false'
+            }
+
+            if mode == "Ask a question":
+                data["question"] = question
 
             response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
-            response.raise_for_status()  # Raise if status_code != 200
+            response.raise_for_status()
 
             result = response.json()
             answer = result.get("answer")
 
             if answer:
                 st.success(answer)
+                st.info(f"Detected Language: {result.get('language', 'unknown')}")
             else:
                 st.error("Unexpected response format.")
 
