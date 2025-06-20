@@ -57,19 +57,27 @@ def load_lottie_url(url):
 animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_p8bfn5to.json")
 
 # --- Logo and Header ---
-st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-st.image("Terasystemsai_logo.png", width=180)
 st.markdown("""
-    <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
-    <h4 style="color:#F8F8F8;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
+<div style='text-align:center;'>
+    <img src='Terasystemsai_logo.png' width='180'/>
+    <div style='display:flex; justify-content:center; align-items:center; gap: 10px;'>
+        <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
+        <div style='width: 80px;'>
+            <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_p8bfn5to.json" background="transparent" speed="1" loop autoplay></lottie-player>
+        </div>
+    </div>
+    <h4 style="color:#FFFFFF;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
 </div>
 """, unsafe_allow_html=True)
 
-st_lottie(animation, height=150, key="intro")
+st_lottie(animation, height=80, key="intro")
 
 # --- Upload section ---
-uploaded_file = st.file_uploader("📄 Upload a PDF", type=["pdf"])
+st.markdown("""
+<div style="background-color: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: black;">
+""", unsafe_allow_html=True)
 
+uploaded_file = st.file_uploader("📄 Upload a PDF", type=["pdf"])
 mode = st.radio("🔍 What do you want to do?", ["Summarize", "Ask a question"], horizontal=True)
 model_name = st.selectbox("🤖 Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
 temperature = st.slider("🎨 Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1, help="Higher values mean more creative output")
@@ -84,6 +92,8 @@ with col2:
 question = ""
 if mode == "Ask a question":
     question = st.text_input("❓ Enter your question", placeholder="e.g. What is the core mission of this document?")
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Request trigger ---
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
@@ -124,9 +134,9 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
             st.error(f"Error: {e}")
 
 # --- Footer Branding ---
-st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-st.image("Terasystemsai_logo.png", width=100)
 st.markdown("""
+<div style='text-align:center;'>
+    <img src='Terasystemsai_logo.png' width='100'/>
     <p style="font-size:14px; color:#eeeeee;">
         <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
         📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
