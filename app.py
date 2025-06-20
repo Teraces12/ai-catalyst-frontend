@@ -7,65 +7,65 @@ from dotenv import load_dotenv
 load_dotenv()
 backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-# Set page config and style
+# Page config with Adobe Red theme and gradient background
 st.set_page_config(
     page_title="AI Catalyst PDF Assistant",
     page_icon="🧠",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
 
+# Adobe red-themed background style
 st.markdown("""
     <style>
-        .stApp {
-            background: linear-gradient(to right, #f8f9fa, #e9ecef);
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .block-container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
-        .stButton>button {
-            background-color: #007bff;
+        body {
+            background: linear-gradient(to right, #FF0000, #D00000);
             color: white;
-            border: none;
-            padding: 0.5em 1.2em;
-            border-radius: 0.5em;
-            font-size: 1em;
-            transition: 0.3s ease-in-out;
         }
-        .stButton>button:hover {
-            background-color: #0056b3;
+        .stApp {
+            background: transparent !important;
         }
-        .stTextInput>div>input, .stSelectbox>div>div>div>input {
-            background-color: #ffffff20;
-            border-radius: 0.4em;
-            padding: 0.4em;
+        .css-1v3fvcr, .css-ffhzg2 {
+            background-color: transparent !important;
+        }
+        .stTextInput>div>input, .stSelectbox>div>div>div, .stButton>button {
+            color: black !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("AI Catalyst PDF Assistant 🧠")
-st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
+# --- Logo and Header ---
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <img src="https://raw.githubusercontent.com/Teraces12/ai-catalyst-frontend/main/assets/terasystem_logo.png" width="180">
+        <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
+        <h4 style="color:#F8F8F8;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
-mode = st.radio("What do you want to do?", ["Summarize", "Ask a question"])
+# --- Upload section ---
+uploaded_file = st.file_uploader("📄 Upload a PDF", type=["pdf"])
 
-model_name = st.selectbox("Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
-temperature = st.slider("Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
-allow_non_english = st.checkbox("Allow non-English PDFs", value=False)
+mode = st.radio("🔍 What do you want to do?", ["Summarize", "Ask a question"], horizontal=True)
+model_name = st.selectbox("🤖 Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
+temperature = st.slider("🎨 Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
+allow_non_english = st.checkbox("🌐 Allow non-English PDFs")
 
 col1, col2 = st.columns(2)
-start_page = col1.number_input("Start Page", min_value=1, value=1)
-end_page = col2.number_input("End Page", min_value=start_page, value=start_page + 4)
+with col1:
+    start_page = st.number_input("Start Page", min_value=1, value=1)
+with col2:
+    end_page = st.number_input("End Page", min_value=start_page, value=start_page + 4)
 
 question = ""
 if mode == "Ask a question":
-    question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
+    question = st.text_input("❓ Enter your question", placeholder="e.g. What is the core mission of this document?")
 
+# --- Request trigger ---
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
-    with st.spinner("Processing..."):
-        progress = st.progress(0)
+    with st.spinner("🚀 Processing..."):
         try:
             endpoint = "/summarize" if mode == "Summarize" else "/ask"
             files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
@@ -76,31 +76,38 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
                 "start_page": int(start_page),
                 "end_page": int(end_page)
             }
-
             if mode == "Ask a question":
                 data["question"] = question
 
             response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
             response.raise_for_status()
-
             result = response.json()
-            answer = result.get("answer")
 
-            if answer:
-                st.success(answer)
-                st.info(f"Detected Language: {result.get('language', 'unknown')}")
-                if citations := result.get("citations"):
-                    st.markdown(f"<small>📑 Citations from: {', '.join(citations)}</small>", unsafe_allow_html=True)
-            else:
-                st.error("Unexpected response format.")
+            st.success(result.get("answer"))
+            st.info(f"🌍 Detected Language: {result.get('language', 'unknown')}")
 
-        except requests.exceptions.HTTPError as http_err:
-            try:
-                error_msg = response.json().get("error", str(http_err))
-                st.error(f"Error: {error_msg}")
-            except:
-                st.error(f"HTTP error: {http_err}")
+            if "citations" in result:
+                sources = ", ".join(result["citations"])
+                st.markdown(f"<p style='font-size: 14px;'>📚 Citations from: {sources}</p>", unsafe_allow_html=True)
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"Request failed: {e}")
         except Exception as e:
             st.error(f"Error: {e}")
-        finally:
-            progress.progress(100)
+
+# --- Footer Branding ---
+st.markdown(
+    """
+    <hr>
+    <div style="text-align:center;">
+        <img src="https://raw.githubusercontent.com/Teraces12/ai-catalyst-frontend/main/assets/terasystem_logo.png" width="100">
+        <p style="font-size:14px; color:#eeeeee;">
+            <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
+            📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
+            ✉️ <a style="color:#fff;" href="mailto:admin@terasystems.ai">admin@terasystems.ai</a> | <a style="color:#fff;" href="mailto:lebede@terasystems.ai">lebede@terasystems.ai</a><br>
+            🌐 <a style="color:#fff;" href="https://www.terasystems.ai">www.terasystems.ai</a>
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
