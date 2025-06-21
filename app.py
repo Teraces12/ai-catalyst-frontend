@@ -10,11 +10,14 @@ from io import BytesIO
 from fpdf import FPDF
 from pdf2docx import Converter
 import pypandoc
+import openai
 
 # Load environment variables
 load_dotenv()
 ACCESS_CODE = os.getenv("STREAMLIT_APP_PASSWORD")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_API_KEY
 
 # Session config
 SESSION_TIMEOUT = 15 * 60  # 15 minutes
@@ -57,7 +60,7 @@ if st.sidebar.button("🚪 Logout"):
     st.experimental_rerun()
 
 # --- App Tabs ---
-tabs = st.tabs(["📄 PDF Assistant", "🌐 Translate PDF", "🔁 Convert Files"])
+tabs = st.tabs(["📄 PDF Assistant", "🌐 Translate PDF", "🔁 Convert Files", "👨‍💻 AI Code & Paper Assistant"])
 
 # --- TAB 1: PDF Assistant ---
 with tabs[0]:
@@ -198,3 +201,30 @@ with tabs[2]:
 
         with open(output_path, "rb") as f:
             st.download_button("📥 Download Converted File", f, file_name=output_path)
+
+# --- TAB 4: AI Code & Paper Assistant ---
+with tabs[3]:
+    st.title("👨‍💻 AI Code & Paper Assistant")
+    task_type = st.selectbox("Select Task:", ["Generate Python Script", "Write Research Paper Section", "Start New Paper"])
+    user_prompt = st.text_area("🧠 Describe what you want to generate:", height=200)
+
+    if st.button("🚀 Generate") and user_prompt:
+        with st.spinner("Generating with GPT..."):
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": f"You are an expert {task_type.lower()}. Output clean, complete content."},
+                        {"role": "user", "content": user_prompt}
+                    ]
+                )
+                generated_output = response.choices[0].message.content
+                st.success("✅ Generation complete")
+                st.code(generated_output if task_type == "Generate Python Script" else "\n" + generated_output)
+
+                download_data = BytesIO(generated_output.encode("utf-8"))
+                file_ext = ".py" if task_type == "Generate Python Script" else ".txt"
+                st.download_button("📥 Download Output", data=download_data, file_name=f"generated{file_ext}", mime="text/plain")
+
+            except Exception as e:
+                st.error(f"❌ Failed to generate: {e}")
