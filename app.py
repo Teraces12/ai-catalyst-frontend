@@ -24,8 +24,7 @@ if not st.session_state.authenticated:
             st.experimental_rerun()  # rerun to refresh state
         else:
             st.error("❌ Invalid access code")
-    st.stop()
-
+    st.stop()  # ✅ removed extra closing parenthesis here
 
 # --- Main App Starts Here ---
 st.set_page_config(
