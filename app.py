@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-ACCESS_CODE = os.getenv("ACCESS_CODE")
+ACCESS_CODE = os.getenv("STREAMLIT_APP_PASSWORD")  # ✅ Updated line
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 # Session state for secure access
@@ -25,6 +25,7 @@ if not st.session_state.authenticated:
         else:
             st.error("❌ Invalid access code")
     st.stop()
+
 
 # --- Main App Starts Here ---
 st.set_page_config(
