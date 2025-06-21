@@ -5,24 +5,25 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
-access_code = os.getenv("ACCESS_CODE", "terasecret123")  # Set your code in .env
+# Secure values
+ACCESS_CODE = os.getenv("ACCESS_CODE")
 
-# Simple session-based access control
+# Check for session-based login
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Access gate
 if not st.session_state.authenticated:
-    st.title("🔐 Access Required")
-    user_code = st.text_input("Enter Access Code", type="password")
+    st.title("🔒 Access Required")
+    user_code = st.text_input("Enter your access code", type="password")
     if st.button("Submit"):
-        if user_code == access_code:
+        if user_code == ACCESS_CODE:
             st.success("✅ Access granted")
             st.session_state.authenticated = True
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Invalid access code")
-    st.stop()
+    st.stop()  # ⛔ Prevent the rest of the app from loading
 
 # ---- Main App Starts Here ----
 st.set_page_config(
