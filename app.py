@@ -32,7 +32,7 @@ st.set_page_config(
 )
 st.title("AI Catalyst PDF Assistant 🧠")
 st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
-
+st.subheader("bY Dr. Lebede Ngartera")
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 mode = st.radio("What do you want to do?", ["Summarize", "Ask a question"])
 
