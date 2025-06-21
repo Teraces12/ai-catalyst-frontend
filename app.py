@@ -1,16 +1,28 @@
 import streamlit as st
 import requests
 import os
+import time
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-ACCESS_CODE = os.getenv("STREAMLIT_APP_PASSWORD")  # ✅ Updated line
+ACCESS_CODE = os.getenv("STREAMLIT_APP_PASSWORD")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-# Session state for secure access
+# Session config
+SESSION_TIMEOUT = 15 * 60  # 15 minutes
+
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+    st.session_state.login_time = None
+
+# Auto logout after session timeout
+if st.session_state.authenticated:
+    time_elapsed = time.time() - st.session_state.login_time
+    if time_elapsed > SESSION_TIMEOUT:
+        st.session_state.authenticated = False
+        st.warning("⏳ Session expired after 15 minutes. Please log in again.")
+        st.experimental_rerun()
 
 # Login Gate
 if not st.session_state.authenticated:
@@ -19,20 +31,25 @@ if not st.session_state.authenticated:
     user_code = st.text_input("Enter access code:", type="password")
     if st.button("Submit"):
         if user_code == ACCESS_CODE:
-            st.success("✅ Access granted")
             st.session_state.authenticated = True
-            st.experimental_rerun()  # rerun to refresh state
+            st.session_state.login_time = time.time()
+            st.success("✅ Access granted")
+            st.experimental_rerun()
         else:
             st.error("❌ Invalid access code")
-    st.stop()  # ✅ removed extra closing parenthesis here
+    st.stop()
 
-# --- Main App Starts Here ---
-st.set_page_config(
-    page_title="AI Catalyst PDF Assistant",
-    page_icon="🧠",
-    layout="centered"
-)
+# --- Main App ---
+st.set_page_config(page_title="AI Catalyst PDF Assistant", page_icon="🧠", layout="centered")
+st.sidebar.success("✅ You are logged in")
 
+# Logout Button
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.authenticated = False
+    st.session_state.login_time = None
+    st.experimental_rerun()
+
+# PDF Assistant UI
 st.title("🧠 AI Catalyst PDF Assistant")
 st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
 
