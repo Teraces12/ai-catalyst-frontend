@@ -2,146 +2,75 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
-from streamlit_lottie import st_lottie
-from PIL import Image
-import json
-import time
-import logging
-from datetime import datetime
-from fastapi.staticfiles import StaticFiles
 
 # Load environment variables
 load_dotenv()
 backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
-api_key = os.getenv("API_KEY", "your-secret")  # API Key
 
-# Configure analytics logging
-logging.basicConfig(filename="analytics.log", level=logging.INFO)
-
-# Page config with Adobe Red theme and gradient background
+# UI Setup
 st.set_page_config(
     page_title="AI Catalyst PDF Assistant",
     page_icon="🧠",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
+st.title("AI Catalyst PDF Assistant 🧠")
+st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
 
-# Adobe red-themed background style
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
-        html, body, [class*="css"]  {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to right, #FF0000, #D00000);
-            color: white;
-        }
-        .stApp {
-            background: transparent !important;
-        }
-        .stTextInput>div>input, .stSelectbox>div>div>div, .stButton>button {
-            color: black !important;
-        }
-        .tooltip {
-            font-size: 12px;
-            color: #ccc;
-        }
-    </style>
-""", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+mode = st.radio("What do you want to do?", ["Summarize", "Ask a question"])
 
-# --- Lottie animation loader ---
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+model_name = st.selectbox("Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
+temperature = st.slider("Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
+allow_non_english = st.checkbox("Allow non-English PDFs", value=False)
 
-animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_p8bfn5to.json")
+# Page range
+start_page = st.number_input("Start Page", min_value=1, value=1)
+end_page = st.number_input("End Page", min_value=start_page, value=start_page + 4)
 
-# --- Logo and Header ---
-st.markdown("""
-<div style='text-align:center;'>
-    <img src='https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/static/Terasystemsai_logo.png' width='180'/>
-    <div style='display:flex; justify-content:center; align-items:center; gap: 10px;'>
-        <h1 style="color:#FFFFFF;">AI Catalyst PDF Assistant 🧠</h1>
-        <div style='width: 80px;'>
-            <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_p8bfn5to.json" background="transparent" speed="1" loop autoplay></lottie-player>
-        </div>
-    </div>
-    <h4 style="color:#FFFFFF;">Summarize or ask questions from your PDF using <b>LangChain + OpenAI</b></h4>
-</div>
-""", unsafe_allow_html=True)
-
-st_lottie(animation, height=80, key="intro")
-
-# --- Upload section ---
-st.markdown("""
-<div style="background-color: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: black;">
-""", unsafe_allow_html=True)
-
-uploaded_file = st.file_uploader("📄 Upload a PDF", type=["pdf"])
-mode = st.radio("🔍 What do you want to do?", ["Summarize", "Ask a question"], horizontal=True)
-model_name = st.selectbox("🤖 Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
-temperature = st.slider("🎨 Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1, help="Higher values mean more creative output")
-allow_non_english = st.checkbox("🌐 Allow non-English PDFs", help="Enable to analyze PDFs in any language")
-
-col1, col2 = st.columns(2)
-with col1:
-    start_page = st.number_input("Start Page", min_value=1, value=1)
-with col2:
-    end_page = st.number_input("End Page", min_value=start_page, value=start_page + 4)
-
+# Question field
 question = ""
 if mode == "Ask a question":
-    question = st.text_input("❓ Enter your question", placeholder="e.g. What is the core mission of this document?")
+    question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
 
-st.markdown("</div>", unsafe_allow_html=True)
-
-# --- Request trigger ---
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
-    with st.spinner("🚀 Processing..."):
+    with st.spinner("Processing..."):
+        progress = st.progress(0)
         try:
-            start_time = time.time()  # Analytics logging
             endpoint = "/summarize" if mode == "Summarize" else "/ask"
             files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
             data = {
                 "model_name": model_name,
                 "temperature": temperature,
                 "allow_non_english": str(allow_non_english).lower(),
-                "start_page": int(start_page),
-                "end_page": int(end_page)
+                "start_page": start_page,
+                "end_page": end_page
             }
             if mode == "Ask a question":
                 data["question"] = question
 
-            headers = {"x-api-key": api_key}  # API Key header
-            response = requests.post(f"{backend_url}{endpoint}", headers=headers, files=files, data=data)
+            response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
             response.raise_for_status()
+
             result = response.json()
+            answer = result.get("answer")
+            citations = result.get("citations", [])
+            lang = result.get("language", "unknown")
 
-            st.success(result.get("answer"))
-            st.info(f"🌍 Detected Language: {result.get('language', 'unknown')}")
+            if answer:
+                st.success(answer)
+                st.info(f"Detected Language: {lang}")
+                if citations:
+                    st.caption("📚 Citations from: " + ", ".join(citations))
+            else:
+                st.error("Unexpected response format.")
 
-            if "citations" in result:
-                sources = ", ".join(result["citations"])
-                st.markdown(f"<p style='font-size: 14px;'>📚 Citations from: {sources}</p>", unsafe_allow_html=True)
-
-            duration = round(time.time() - start_time, 2)
-            logging.info(f"{datetime.utcnow()} | Mode: {mode.lower()} | Time: {duration}s")
-            st.markdown(f"<p class='tooltip'>📈 Processed in {duration}s</p>", unsafe_allow_html=True)
-
-        except requests.exceptions.RequestException as e:
-            st.error(f"Request failed: {e}")
+        except requests.exceptions.HTTPError as http_err:
+            try:
+                st.error(f"Error: {response.json().get('error', str(http_err))}")
+            except:
+                st.error(f"HTTP error: {http_err}")
         except Exception as e:
             st.error(f"Error: {e}")
-
-# --- Footer Branding ---
-st.markdown("""
-<div style='text-align:center;'>
-    <img src='https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/static/Terasystemsai_logo.png' width='100'/>
-    <p style="font-size:14px; color:#eeeeee;">
-        <strong>TerasystemsAI</strong> — Empowering Decisions Through Data & AI<br>
-        📍 Philadelphia, PA, USA — Serving Globally 🌎<br>
-        ✉️ <a style="color:#fff;" href="mailto:admin@terasystems.ai">admin@terasystems.ai</a> | <a style="color:#fff;" href="mailto:lebede@terasystems.ai">lebede@terasystems.ai</a><br>
-        🌐 <a style="color:#fff;" href="https://www.terasystems.ai">www.terasystems.ai</a>
-    </p>
-</div>
-""", unsafe_allow_html=True)
+        finally:
+            progress.progress(100)
