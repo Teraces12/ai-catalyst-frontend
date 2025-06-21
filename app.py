@@ -5,44 +5,43 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-# Secure values
 ACCESS_CODE = os.getenv("ACCESS_CODE")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-# Check for session-based login
+# Session state for secure access
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# Access gate
+# Login Gate
 if not st.session_state.authenticated:
-    st.title("🔒 Access Required")
-    user_code = st.text_input("Enter your access code", type="password")
+    st.set_page_config(page_title="Secure Access", layout="centered")
+    st.title("🔐 Secure Access Required")
+    user_code = st.text_input("Enter access code:", type="password")
     if st.button("Submit"):
         if user_code == ACCESS_CODE:
             st.success("✅ Access granted")
             st.session_state.authenticated = True
-            st.rerun()
+            st.experimental_rerun()  # rerun to refresh state
         else:
             st.error("❌ Invalid access code")
-    st.stop()  # ⛔ Prevent the rest of the app from loading
+    st.stop()
 
-# ---- Main App Starts Here ----
+# --- Main App Starts Here ---
 st.set_page_config(
     page_title="AI Catalyst PDF Assistant",
     page_icon="🧠",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
 
-st.title("AI Catalyst PDF Assistant 🧠")
+st.title("🧠 AI Catalyst PDF Assistant")
 st.subheader("Summarize or ask questions from your PDF using LangChain + OpenAI")
 
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
-mode = st.radio("What do you want to do?", ["Summarize", "Ask a question"])
+uploaded_file = st.file_uploader("📄 Upload a PDF", type=["pdf"])
+mode = st.radio("🔍 Choose an action:", ["Summarize", "Ask a question"])
 
-# Advanced options
-model_name = st.selectbox("Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
-temperature = st.slider("Temperature (creativity):", 0.0, 1.0, 0.0, step=0.1)
-allow_non_english = st.checkbox("Allow non-English PDFs", value=False)
+model_name = st.selectbox("🤖 Select model:", ["gpt-3.5-turbo-16k", "gpt-4"])
+temperature = st.slider("🎨 Creativity level:", 0.0, 1.0, 0.0, step=0.1)
+allow_non_english = st.checkbox("🌐 Allow non-English PDFs", value=False)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -52,11 +51,11 @@ with col2:
 
 question = ""
 if mode == "Ask a question":
-    question = st.text_input("Enter your question:", placeholder="e.g. What is the core mission of this document?")
+    question = st.text_input("❓ Your question:", placeholder="e.g. What is the core mission of this document?")
 
+# --- Process PDF ---
 if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and question)):
-    with st.spinner("Processing..."):
-        progress = st.progress(0)
+    with st.spinner("⚙️ Processing..."):
         try:
             endpoint = "/summarize" if mode == "Summarize" else "/ask"
             files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
@@ -67,11 +66,10 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
                 "start_page": int(start_page),
                 "end_page": int(end_page)
             }
-
             if mode == "Ask a question":
                 data["question"] = question
 
-            response = requests.post(f"{backend_url}{endpoint}", files=files, data=data)
+            response = requests.post(f"{BACKEND_URL}{endpoint}", files=files, data=data)
             response.raise_for_status()
             result = response.json()
 
@@ -83,17 +81,11 @@ if uploaded_file and (mode == "Summarize" or (mode == "Ask a question" and quest
                 st.success(answer)
                 st.info(f"🌍 Detected Language: {language}")
                 if citations:
-                    st.caption(f"📚 Citations from: {', '.join(citations)}")
+                    st.caption(f"📚 Citations: {', '.join(citations)}")
             else:
-                st.error("Unexpected response format.")
+                st.error("⚠️ Unexpected response format.")
 
-        except requests.exceptions.HTTPError as http_err:
-            try:
-                error_msg = response.json().get("error", str(http_err))
-                st.error(f"Error: {error_msg}")
-            except:
-                st.error(f"HTTP error: {http_err}")
+        except requests.exceptions.RequestException as e:
+            st.error(f"🚫 Request failed: {e}")
         except Exception as e:
-            st.error(f"Error: {e}")
-        finally:
-            progress.progress(100)
+            st.error(f"🔥 Internal error: {e}")
